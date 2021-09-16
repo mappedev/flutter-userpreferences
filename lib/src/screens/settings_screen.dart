@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:userpreferencesapp/src/widgets/drawer_widget.dart';
+
+import 'package:userpreferencesapp/src/share_prefs/user_prefs.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -13,19 +14,23 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _isColorSecondary = false;
-  int _gender = 1;
-  String _name = 'Mario';
+  late bool _isColorSecondary;
+  late int _gender;
+  late String _name;
 
   late TextEditingController _textController;
+
+  final UserPrefs prefs = UserPrefs();
 
   @override
   void initState() {
     super.initState();
 
-    SharedPreferences.getInstance().then((prefs) {
-      _gender = prefs.getInt('gender')!;
-    });
+    prefs.lastPage = SettingsScreen.routeName;
+
+    _isColorSecondary = prefs.isColorSecondary;
+    _gender = prefs.gender;
+    _name = prefs.name;
 
     _textController = TextEditingController(text: _name);
   }
@@ -35,8 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() => _gender = valueValidated);
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('gender', valueValidated);
+    prefs.gender = valueValidated;
   }
 
   @override
@@ -45,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: const Text('Ajustes'),
+        backgroundColor: prefs.isColorSecondary ? Colors.teal : Colors.blue,
       ),
       drawer: const DrawerWidget(),
       body: ListView(
@@ -65,6 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Color secundario'),
             onChanged: (value) {
               setState(() => _isColorSecondary = value);
+              prefs.isColorSecondary = value;
             }
           ),
           RadioListTile(
@@ -88,7 +94,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 labelText: 'Nombre',
                 helperText: 'Nombre de la persona usando el teléfono'
               ),
-              onChanged: (String value) => _name = value,
+              onChanged: (String value) {
+                _name = value;
+                prefs.name = value;
+              }
             ),
           )
         ],
